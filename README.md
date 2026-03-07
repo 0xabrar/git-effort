@@ -6,21 +6,21 @@ Estimate time spent on a git repository by analyzing commit timestamps. A modern
 
 `git-effort` estimates human working time from commit timestamps. It does not measure CPU time, AI output, or "hours of value created." It infers likely work sessions from Git history.
 
-Like `git-hours`, the core idea is simple. For each author in the commit history:
+The core idea is simple. For each author in the commit history:
 
 1. Sort commits by time.
 2. Compare the time gap between each commit and the next one.
 3. If the gap is less than or equal to `--max-commit-diff`, keep those commits in the same coding session.
 4. If the gap is larger than `--max-commit-diff`, the current session is finished and a new one starts.
-5. For every session, add `--first-commit-add` minutes to account for work before the first visible commit.
-6. Add the actual minutes between commits that belong to the same session.
+5. Measure each session from the first commit in that session to the last.
+6. If a session is shorter than `--min-session`, round it up to that minimum.
 7. Sum the sessions and convert the total to hours.
 
 Visualized with the defaults:
 
 ```text
 max-commit-diff = 120 min
-first-commit-add = 120 min
+min-session = 15 min
 
 09:00      09:25      10:10                         14:45      15:05
   o----------o----------o                             o----------o
@@ -29,10 +29,12 @@ first-commit-add = 120 min
 gap between 10:10 and 14:45 = 275 min
 275 > 120, so session 1 ends and session 2 begins
 
-session 1 = 120 + 25 + 45 = 190 min
-session 2 = 120 + 20 = 140 min
-total     = 330 min = 5.5 h
+session 1 span = 70 min
+session 2 span = 20 min
+total          = 90 min = 1.5 h
 ```
+
+A single-commit session is credited with the minimum session length. With the defaults, one isolated commit counts as `15` minutes, not `0` and not an automatic `2` hours.
 
 That produces a per-author estimate and a total for the whole repository.
 
@@ -72,7 +74,7 @@ Total                                    61.0       220
 | Flag | Description | Default |
 |------|-------------|---------|
 | `--max-commit-diff <min>` | Max minutes between commits in one session | `120` |
-| `--first-commit-add <min>` | Minutes credited for first commit of each session | `120` |
+| `--min-session <min>` | Minimum minutes credited for any session | `15` |
 | `--since <date>` | Analyze commits after this date (any format git accepts) | |
 | `--until <date>` | Analyze commits before this date | |
 | `--branch <name>` | Analyze only the specified branch | current branch |
@@ -103,8 +105,8 @@ git-effort --json
 # Analyze a repo at a different path, sorted by commits
 git-effort --path /path/to/repo --sort commits
 
-# Tighter session window (30 min gap, 30 min startup)
-git-effort --max-commit-diff 30 --first-commit-add 30
+# Tighter session window with a 10 min minimum session
+git-effort --max-commit-diff 30 --min-session 10
 ```
 
 ## JSON output

@@ -8,67 +8,71 @@ function d(iso: string): Date {
 
 describe('estimateHours', () => {
   const maxDiff = 120; // 2 hours
-  const firstAdd = 120; // 2 hours
+  const minSession = 15; // 15 minutes
 
   it('returns 0 hours and 0 sessions for empty array', () => {
-    const result = estimateHours([], maxDiff, firstAdd);
+    const result = estimateHours([], maxDiff, minSession);
     assert.equal(result.hours, 0);
     assert.equal(result.sessions, 0);
   });
 
-  it('single commit gets firstCommitAdd hours (fix #1)', () => {
-    const result = estimateHours([d('2024-01-01T10:00:00Z')], maxDiff, firstAdd);
-    assert.equal(result.hours, 2); // 120 min = 2 hours
+  it('single commit gets the minimum session floor', () => {
+    const result = estimateHours([d('2024-01-01T10:00:00Z')], maxDiff, minSession);
+    assert.equal(result.hours, 0.3); // 15 min = 0.25h -> 0.3
     assert.equal(result.sessions, 1);
   });
 
-  it('two commits in same session', () => {
+  it('two commits in same session use observed span', () => {
     const dates = [
       d('2024-01-01T10:00:00Z'),
       d('2024-01-01T11:00:00Z'), // 60 min later, within maxDiff
     ];
-    const result = estimateHours(dates, maxDiff, firstAdd);
-    // firstAdd (120 min) + diff (60 min) = 180 min = 3 hours
-    assert.equal(result.hours, 3);
+    const result = estimateHours(dates, maxDiff, minSession);
+    assert.equal(result.hours, 1);
     assert.equal(result.sessions, 1);
   });
 
-  it('two commits in different sessions', () => {
+  it('two commits in different sessions each get the minimum session floor', () => {
     const dates = [
       d('2024-01-01T10:00:00Z'),
       d('2024-01-01T14:00:00Z'), // 240 min later, exceeds maxDiff
     ];
-    const result = estimateHours(dates, maxDiff, firstAdd);
-    // Session 1: firstAdd (120 min)
-    // Session 2: firstAdd (120 min)
-    // Total: 240 min = 4 hours
-    assert.equal(result.hours, 4);
+    const result = estimateHours(dates, maxDiff, minSession);
+    // 15 min + 15 min = 30 min = 0.5h
+    assert.equal(result.hours, 0.5);
     assert.equal(result.sessions, 2);
   });
 
-  it('first session gets firstCommitAdd (fix #2)', () => {
-    // 3 commits: 2 in session 1, 1 in session 2
+  it('new sessions use a minimum floor instead of a large startup bonus', () => {
     const dates = [
       d('2024-01-01T10:00:00Z'),
       d('2024-01-01T10:30:00Z'), // 30 min later
       d('2024-01-01T15:00:00Z'), // 270 min later = new session
     ];
-    const result = estimateHours(dates, maxDiff, firstAdd);
-    // Session 1: firstAdd(120) + 30 = 150 min
-    // Session 2: firstAdd(120) = 120 min
-    // Total: 270 min = 4.5 hours
-    assert.equal(result.hours, 4.5);
+    const result = estimateHours(dates, maxDiff, minSession);
+    // Session 1: 30 min span
+    // Session 2: 15 min minimum
+    // Total: 45 min = 0.75 -> 0.8 hours
+    assert.equal(result.hours, 0.8);
     assert.equal(result.sessions, 2);
   });
 
-  it('returns fractional hours (fix #3)', () => {
+  it('returns fractional hours', () => {
     const dates = [
       d('2024-01-01T10:00:00Z'),
       d('2024-01-01T10:20:00Z'), // 20 min
     ];
-    const result = estimateHours(dates, maxDiff, firstAdd);
-    // firstAdd (120) + 20 = 140 min = 2.333... → 2.3
-    assert.equal(result.hours, 2.3);
+    const result = estimateHours(dates, maxDiff, minSession);
+    assert.equal(result.hours, 0.3);
+  });
+
+  it('tiny sessions still get the minimum floor', () => {
+    const dates = [
+      d('2024-01-01T10:00:00Z'),
+      d('2024-01-01T10:05:00Z'),
+    ];
+    const result = estimateHours(dates, maxDiff, minSession);
+    assert.equal(result.hours, 0.3);
   });
 
   it('handles descending-order input (git log default)', () => {
@@ -76,9 +80,8 @@ describe('estimateHours', () => {
       d('2024-01-01T11:00:00Z'), // newer first
       d('2024-01-01T10:00:00Z'), // older second
     ];
-    const result = estimateHours(dates, maxDiff, firstAdd);
-    // Should still work: firstAdd(120) + 60 = 180 = 3 hours
-    assert.equal(result.hours, 3);
+    const result = estimateHours(dates, maxDiff, minSession);
+    assert.equal(result.hours, 1);
   });
 
   it('many commits across multiple sessions', () => {
@@ -92,25 +95,24 @@ describe('estimateHours', () => {
       // gap > 120 min
       d('2024-01-02T09:00:00Z'),
     ];
-    const result = estimateHours(dates, maxDiff, firstAdd);
-    // Session 1: firstAdd(120) + 30 + 30 = 180 min
-    // Session 2: firstAdd(120) + 45 = 165 min
-    // Session 3: firstAdd(120) = 120 min
-    // Total: 465 min = 7.75 → 7.8 hours
-    assert.equal(result.hours, 7.8);
+    const result = estimateHours(dates, maxDiff, minSession);
+    // Session 1: 60 min span
+    // Session 2: 45 min span
+    // Session 3: 15 min minimum
+    // Total: 120 min = 2 hours
+    assert.equal(result.hours, 2);
     assert.equal(result.sessions, 3);
   });
 
-  it('custom maxDiff and firstAdd', () => {
+  it('custom maxDiff and minSession', () => {
     const dates = [
       d('2024-01-01T10:00:00Z'),
       d('2024-01-01T10:30:00Z'),
     ];
     // maxDiff=20 means 30 min gap creates new session
     const result = estimateHours(dates, 20, 60);
-    // Session 1: firstAdd(60)
-    // Session 2: firstAdd(60)
-    // Total: 120 min = 2 hours
+    // Session 1: 60 min minimum
+    // Session 2: 60 min minimum
     assert.equal(result.hours, 2);
     assert.equal(result.sessions, 2);
   });

@@ -19,7 +19,7 @@ export interface SessionResult {
 
 export interface Config {
   maxCommitDiffMinutes: number;
-  firstCommitAddMinutes: number;
+  minSessionMinutes: number;
   since?: string;
   until?: string;
   branch?: string;
@@ -33,7 +33,7 @@ export interface Config {
 
 export const DEFAULT_CONFIG: Omit<Config, 'aliases'> & { aliases: Map<string, string> } = {
   maxCommitDiffMinutes: 120,
-  firstCommitAddMinutes: 120,
+  minSessionMinutes: 15,
   allBranches: false,
   noMerges: false,
   aliases: new Map(),

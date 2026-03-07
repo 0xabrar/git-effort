@@ -7,7 +7,7 @@ import type { Commit, Config } from '../src/types.ts';
 function makeConfig(overrides: Partial<Config> = {}): Config {
   return {
     maxCommitDiffMinutes: 120,
-    firstCommitAddMinutes: 120,
+    minSessionMinutes: 15,
     allBranches: false,
     noMerges: false,
     aliases: new Map(),
@@ -32,7 +32,7 @@ describe('integration: authors + format', () => {
 
     assert.equal(authors.length, 1);
     assert.equal(authors[0].name, 'Alice');
-    assert.equal(authors[0].hours, 2); // 120 min firstAdd
+    assert.equal(authors[0].hours, 0.3); // 15 min minimum session
     assert.equal(authors[0].commits, 1);
   });
 
@@ -97,7 +97,7 @@ describe('integration: authors + format', () => {
 
     assert.ok(Array.isArray(parsed.authors));
     assert.equal(parsed.authors[0].name, 'Alice');
-    assert.equal(parsed.total.hours, 2);
+    assert.equal(parsed.total.hours, 0.3);
     assert.equal(parsed.total.commits, 1);
   });
 
@@ -118,12 +118,12 @@ describe('integration: authors + format', () => {
     const alice = authors.find((a) => a.name === 'Alice')!;
     const bob = authors.find((a) => a.name === 'Bob')!;
 
-    // Alice: session1 = firstAdd(120) + 30 = 150, session2 = firstAdd(120) = 120, total = 270 = 4.5h
-    assert.equal(alice.hours, 4.5);
+    // Alice: session1 = 30 min span, session2 = 15 min minimum, total = 45 min = 0.75 -> 0.8h
+    assert.equal(alice.hours, 0.8);
     assert.equal(alice.commits, 3);
 
-    // Bob: single commit = firstAdd(120) = 2h
-    assert.equal(bob.hours, 2);
+    // Bob: single commit = 15 min minimum = 0.25 -> 0.3h
+    assert.equal(bob.hours, 0.3);
     assert.equal(bob.commits, 1);
   });
 });

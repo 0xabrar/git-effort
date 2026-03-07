@@ -22,7 +22,7 @@ Usage: git-effort [options]
 
 Options:
   --max-commit-diff <min>   Max minutes between commits in one session (default: 120)
-  --first-commit-add <min>  Minutes to add for first commit of each session (default: 120)
+  --min-session <min>       Minimum minutes to credit for a session (default: 15)
   --since <date>            Analyze commits since date (passed to git)
   --until <date>            Analyze commits until date (passed to git)
   --branch <name>           Analyze only the specified branch
@@ -43,6 +43,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
       args: argv,
       options: {
         'max-commit-diff': { type: 'string' },
+        'min-session': { type: 'string' },
         'first-commit-add': { type: 'string' },
         since: { type: 'string' },
         until: { type: 'string' },
@@ -92,6 +93,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
   }
 
   const sortVal = (vals.sort ?? 'hours') as Config['sort'];
+  const minSessionVal = vals['min-session'] ?? vals['first-commit-add'];
   if (!['hours', 'commits', 'name'].includes(sortVal)) {
     console.error(`Invalid sort value: "${sortVal}". Expected: hours, commits, name`);
     process.exitCode = 1;
@@ -100,7 +102,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
 
   const config: Config = {
     maxCommitDiffMinutes: vals['max-commit-diff'] ? Number(vals['max-commit-diff']) : DEFAULT_CONFIG.maxCommitDiffMinutes,
-    firstCommitAddMinutes: vals['first-commit-add'] ? Number(vals['first-commit-add']) : DEFAULT_CONFIG.firstCommitAddMinutes,
+    minSessionMinutes: minSessionVal ? Number(minSessionVal) : DEFAULT_CONFIG.minSessionMinutes,
     since: vals.since,
     until: vals.until,
     branch: vals.branch,

@@ -22,7 +22,7 @@ export function computeAuthorWork(commits: Commit[], config: Config): AuthorWork
 
   for (const [email, authorCommits] of grouped) {
     const dates = authorCommits.map((c) => c.date);
-    const { hours } = estimateHours(dates, config.maxCommitDiffMinutes, config.firstCommitAddMinutes);
+    const { hours } = estimateHours(dates, config.maxCommitDiffMinutes, config.minSessionMinutes);
 
     results.push({
       name: authorCommits[0].authorName,
