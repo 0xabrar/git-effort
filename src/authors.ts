@@ -1,5 +1,5 @@
-import type { Commit, AuthorWork, Config } from './types.ts';
-import { estimateHours } from './sessions.ts';
+import type { Commit, AuthorWork, Config } from './types.js';
+import { estimateHours } from './sessions.js';
 
 /**
  * Group commits by author (applying aliases), then estimate hours per author.

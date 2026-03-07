@@ -1,10 +1,10 @@
 import { parseArgs } from 'node:util';
 import { readFileSync } from 'node:fs';
-import { getCommits } from './git.ts';
-import { computeAuthorWork } from './authors.ts';
-import { formatTable, formatJson } from './format.ts';
-import type { Config } from './types.ts';
-import { DEFAULT_CONFIG } from './types.ts';
+import { getCommits } from './git.js';
+import { computeAuthorWork } from './authors.js';
+import { formatTable, formatJson } from './format.js';
+import type { Config } from './types.js';
+import { DEFAULT_CONFIG } from './types.js';
 
 function getVersion(): string {
   try {

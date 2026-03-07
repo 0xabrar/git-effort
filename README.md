@@ -4,17 +4,37 @@ Estimate time spent on a git repository by analyzing commit timestamps. A modern
 
 ## How it works
 
-`git-effort` groups each author's commits into **sessions**. Two consecutive commits within a configurable window (default: 2 hours) belong to the same session. The first commit of every session is credited with an assumed startup time (default: 2 hours). Time between commits in the same session is counted directly.
+`git-effort` estimates human working time from commit timestamps. It does not measure CPU time, AI output, or "hours of value created." It infers likely work sessions from Git history.
 
-This produces a per-author estimate of hours worked and a total for the entire repository.
+Like `git-hours`, the core idea is simple. For each author in the commit history:
 
-### Improvements over git-hours
+1. Sort commits by time.
+2. Compare the time gap between each commit and the next one.
+3. If the gap is less than or equal to `--max-commit-diff`, keep those commits in the same coding session.
+4. If the gap is larger than `--max-commit-diff`, the current session is finished and a new one starts.
+5. For every session, add `--first-commit-add` minutes to account for work before the first visible commit.
+6. Add the actual minutes between commits that belong to the same session.
+7. Sum the sessions and convert the total to hours.
 
-- A single commit correctly gets credited with startup time (not 0 hours)
-- The first commit of **every** session gets startup time (not just some)
-- Fractional hours (e.g. `4.3h`) instead of integer rounding
-- No runtime dependencies — just Node.js and git
-- Written in TypeScript with the Node.js built-in test runner
+Visualized with the defaults:
+
+```text
+max-commit-diff = 120 min
+first-commit-add = 120 min
+
+09:00      09:25      10:10                         14:45      15:05
+  o----------o----------o                             o----------o
+  <------ session 1 ----->                             <- s2 --->
+
+gap between 10:10 and 14:45 = 275 min
+275 > 120, so session 1 ends and session 2 begins
+
+session 1 = 120 + 25 + 45 = 190 min
+session 2 = 120 + 20 = 140 min
+total     = 330 min = 5.5 h
+```
+
+That produces a per-author estimate and a total for the whole repository.
 
 ## Installation
 

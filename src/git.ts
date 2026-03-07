@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import type { Commit } from './types.ts';
+import type { Commit } from './types.js';
 
 const NULL = '\x00';
 // Use git's %x00 escape so the arg string itself has no null bytes (Node rejects those),

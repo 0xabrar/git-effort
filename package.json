@@ -3,21 +3,35 @@
   "version": "1.0.0",
   "description": "Estimate time spent on a git repository — modern successor to git-hours",
   "type": "module",
+  "files": [
+    "dist",
+    "bin"
+  ],
   "bin": {
-    "git-effort": "./bin/git-effort.js"
+    "git-effort": "bin/git-effort.js"
   },
-  "main": "./src/cli.ts",
+  "main": "./dist/cli.js",
+  "types": "./dist/cli.d.ts",
   "scripts": {
+    "prebuild": "rm -rf dist",
     "start": "tsx src/cli.ts",
     "test": "node --import tsx --test test/*.test.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": ["git", "hours", "effort", "time", "estimate"],
+  "keywords": [
+    "git",
+    "hours",
+    "effort",
+    "time",
+    "estimate"
+  ],
   "license": "MIT",
   "engines": {
     "node": ">=22"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   }

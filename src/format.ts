@@ -1,4 +1,4 @@
-import type { AuthorWork } from './types.ts';
+import type { AuthorWork } from './types.js';
 
 export function formatTable(authors: AuthorWork[]): string {
   if (authors.length === 0) return 'No commits found.';

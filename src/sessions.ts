@@ -1,4 +1,4 @@
-import type { SessionResult } from './types.ts';
+import type { SessionResult } from './types.js';
 
 /**
  * Estimate hours from an array of commit dates.
