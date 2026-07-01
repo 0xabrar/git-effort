@@ -15,7 +15,7 @@ export function estimateHours(
   minSessionMinutes: number,
 ): SessionResult {
   if (dates.length === 0) {
-    return { hours: 0, sessions: 0 };
+    return { hours: 0, minutes: 0, sessions: 0 };
   }
 
   // Sort ascending (oldest first) so we walk forward in time
@@ -44,6 +44,7 @@ export function estimateHours(
 
   return {
     hours: roundHours(totalMinutes / 60),
+    minutes: Math.round(totalMinutes),
     sessions,
   };
 }
